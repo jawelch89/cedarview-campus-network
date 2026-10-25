@@ -2,7 +2,7 @@
 
 Design and implementation of a secure, segmented campus network for a fictional county juvenile services facility, built and tested in Cisco Packet Tracer 9.0.
 
-![Network topology](images/topology.png)
+![Network topology](images/Topology.png)
 
 ## Overview
 
@@ -70,7 +70,7 @@ The design serves 10 administrative PCs, 40 youth PCs and 12 dorm staff PCs acro
 | File | Description |
 |------|-------------|
 | `cedarview-campus.pkt` | Complete network (open with Cisco Packet Tracer 9.0 or later) |
-| `images/topology.png` | Network topology diagram |
+| `images/Topology.png` | Network topology diagram |
 | `configs/` | Running configuration for each router and switch (passwords and keys removed) |
 
 ## Skills Demonstrated
