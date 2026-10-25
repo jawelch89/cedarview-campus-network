@@ -1,0 +1,201 @@
+!
+version 15.4
+service timestamps log datetime msec
+service timestamps debug datetime msec
+service password-encryption
+!
+hostname CJSC-FW-RTR
+!
+!
+!
+enable secret 5 [removed]
+!
+!
+ip dhcp excluded-address 10.10.0.1 10.10.0.49
+ip dhcp excluded-address 10.20.0.1 10.20.0.49
+ip dhcp excluded-address 10.30.0.1 10.30.0.49
+ip dhcp excluded-address 10.40.0.1 10.40.0.49
+ip dhcp excluded-address 10.50.0.1 10.50.0.49
+ip dhcp excluded-address 10.0.0.1 10.0.0.49
+!
+ip dhcp pool VLAN10-ADMIN
+ network 10.10.0.0 255.255.255.0
+ default-router 10.10.0.1
+ dns-server 8.8.8.8
+ip dhcp pool VLAN20-GUEST
+ network 10.20.0.0 255.255.255.0
+ default-router 10.20.0.1
+ dns-server 8.8.8.8
+ip dhcp pool VLAN30-STAFFWIFI
+ network 10.30.0.0 255.255.255.0
+ default-router 10.30.0.1
+ dns-server 8.8.8.8
+ip dhcp pool VLAN40-YOUTH
+ network 10.40.0.0 255.255.255.0
+ default-router 10.40.0.1
+ dns-server 10.0.0.10
+ip dhcp pool VLAN50-DORMSTAFF
+ network 10.50.0.0 255.255.255.0
+ default-router 10.50.0.1
+ dns-server 8.8.8.8
+!
+!
+aaa new-model
+!
+aaa authentication login default local 
+!
+!
+!
+!
+!
+!
+!
+no ip cef
+no ipv6 cef
+!
+!
+!
+username admin privilege 15 secret 5 [removed]
+username staff-admin privilege 15 secret 5 [removed]
+!
+!
+crypto isakmp policy 10
+ encr aes
+ authentication pre-share
+ group 2
+!
+crypto isakmp key [removed] address 192.168.0.1
+!
+!
+!
+crypto ipsec transform-set CJSC-TS esp-aes esp-sha-hmac
+!
+crypto map CJSC-VPN-MAP 10 ipsec-isakmp 
+ set peer 192.168.0.1
+ set transform-set CJSC-TS 
+ match address VPN-TRAFFIC
+!
+!
+!
+!
+!
+!
+ip ssh version 2
+no ip domain-lookup
+ip domain-name cjsc.local
+!
+!
+spanning-tree mode pvst
+!
+!
+!
+!
+!
+!
+interface GigabitEthernet0/0/0
+ no ip address
+ duplex auto
+ speed auto
+!
+interface GigabitEthernet0/0/0.10
+ encapsulation dot1Q 10
+ ip address 10.10.0.1 255.255.255.0
+ ip nat inside
+!
+interface GigabitEthernet0/0/0.20
+ encapsulation dot1Q 20
+ ip address 10.20.0.1 255.255.255.0
+ ip nat inside
+ ip access-group GUEST-RESTRICT in
+!
+interface GigabitEthernet0/0/0.30
+ encapsulation dot1Q 30
+ ip address 10.30.0.1 255.255.255.0
+ ip nat inside
+!
+interface GigabitEthernet0/0/0.40
+ encapsulation dot1Q 40
+ ip address 10.40.0.1 255.255.255.0
+ ip access-group YOUTH-BLOCK in
+!
+interface GigabitEthernet0/0/0.50
+ encapsulation dot1Q 50
+ ip address 10.50.0.1 255.255.255.0
+ ip nat inside
+!
+interface GigabitEthernet0/0/1
+ ip address 10.0.0.1 255.255.255.0
+ duplex auto
+ speed auto
+!
+interface GigabitEthernet0/0/2
+ no ip address
+ duplex auto
+ speed auto
+!
+interface Serial0/1/0
+ ip address 192.168.0.2 255.255.255.252
+ ip nat outside
+ clock rate 2000000
+ crypto map CJSC-VPN-MAP
+!
+interface Serial0/1/1
+ no ip address
+ clock rate 2000000
+!
+interface Vlan1
+ no ip address
+ shutdown
+!
+ip nat inside source list NAT-ALLOWED interface Serial0/1/0 overload
+ip classless
+ip route 0.0.0.0 0.0.0.0 192.168.0.1 
+!
+ip flow-export version 9
+!
+!
+ip access-list extended VPN-TRAFFIC
+ permit ip 10.10.0.0 0.0.0.255 172.16.0.0 0.0.0.255
+ permit ip 10.50.0.0 0.0.0.255 172.16.0.0 0.0.0.255
+ip access-list extended YOUTH-BLOCK
+ permit ip 10.40.0.0 0.0.0.255 host 10.0.0.10
+ permit udp any any eq bootps
+ permit udp any any eq bootpc
+ deny ip 10.40.0.0 0.0.0.255 any
+ip access-list extended GUEST-RESTRICT
+ deny ip 10.20.0.0 0.0.0.255 10.0.0.0 0.255.255.255
+ deny ip 10.20.0.0 0.0.0.255 172.16.0.0 0.15.255.255
+ deny ip 10.20.0.0 0.0.0.255 192.168.0.0 0.0.255.255
+ permit udp 10.20.0.0 0.0.0.255 any eq domain
+ permit ip 10.20.0.0 0.0.0.255 any
+ip access-list extended NAT-ALLOWED
+ deny ip 10.10.0.0 0.0.0.255 172.16.0.0 0.0.0.255
+ deny ip 10.50.0.0 0.0.0.255 172.16.0.0 0.0.0.255
+ permit ip 10.10.0.0 0.0.0.255 any
+ permit ip 10.20.0.0 0.0.0.255 any
+ permit ip 10.30.0.0 0.0.0.255 any
+ permit ip 10.50.0.0 0.0.0.255 any
+!
+banner motd #
+*CEDARVIEW JUVENILE SERVICES CENTER - AUTHORIZED ACCESS ONLY
+*This system is the property of CJSC. Authorized users only.
+*All activity is monitored and logged. Unauthorized access is prohibited.
+*By continuing, you acknowledge and accept the CJSC Acceptable Use Policy.
+#
+!
+!
+!
+!
+logging 10.0.0.40
+line con 0
+ login authentication default
+!
+line aux 0
+!
+line vty 0 4
+ login authentication default
+!
+!
+ntp server 10.0.0.30
+!
+end
